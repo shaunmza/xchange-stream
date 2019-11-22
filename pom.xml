@@ -23,6 +23,8 @@
         <module>xchange-bitfinex</module>
         <module>xchange-bitmex</module>
         <module>xchange-poloniex2</module>
+        <module>xchange-luno</module>
+        <module>xchange-valr</module>
         <module>xchange-bitflyer</module>
         <module>xchange-gemini</module>
         <module>xchange-binance</module>
