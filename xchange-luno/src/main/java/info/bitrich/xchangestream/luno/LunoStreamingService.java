@@ -1,96 +1,53 @@
 package info.bitrich.xchangestream.luno;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import info.bitrich.xchangestream.bitfinex.dto.*;
+import info.bitrich.xchangestream.core.ProductSubscription;
+import info.bitrich.xchangestream.luno.dto.*;
 import info.bitrich.xchangestream.service.netty.JsonNettyStreamingService;
-import info.bitrich.xchangestream.service.netty.StreamingObjectMapperHelper;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensionHandler;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import org.apache.commons.lang3.StringUtils;
-import org.knowm.xchange.bitfinex.service.BitfinexAdapters;
-import org.knowm.xchange.exceptions.ExchangeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import si.mazi.rescu.SynchronizedValueFactory;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
-import static org.knowm.xchange.service.BaseParamsDigest.HMAC_SHA_384;
 
 public class LunoStreamingService extends JsonNettyStreamingService {
 
     private static final Logger LOG = LoggerFactory.getLogger(LunoStreamingService.class);
 
-    static final String CHANNEL_USER_POSITIONS = "userPositions";
-    static final String CHANNEL_USER_BALANCE_UPDATES = "userBalanceUpdates";
-    static final String CHANNEL_USER_BALANCES = "userBalances";
-    static final String CHANNEL_USER_ORDER_UPDATES = "userOrderUpdates";
-    static final String CHANNEL_USER_ORDERS = "userOrders";
-    static final String CHANNEL_USER_TRADES = "userTrades";
-    static final String CHANNEL_USER_PRE_TRADES = "userPreTrades";
-
-    private static final String INFO = "info";
-    private static final String ERROR = "error";
-    private static final String CHANNEL_ID = "chanId";
-    private static final String SUBSCRIBED = "subscribed";
-    private static final String UNSUBSCRIBED = "unsubscribed";
-    private static final String ERROR_CODE = "code";
-    private static final String AUTH = "auth";
-    private static final String STATUS = "status";
-    private static final String MESSAGE = "msg";
-    private static final String EVENT = "event";
-    private static final String VERSION = "version";
-
-    private static final int CALCULATION_BATCH_SIZE = 8;
-    private static final List<String> WALLETS = Arrays.asList("exchange", "margin", "funding");
-
-    private final PublishSubject<LunoWebSocketAuthPreTrade> subjectPreTrade = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketAuthTrade> subjectTrade = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketAuthOrder> subjectOrder = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketAuthBalance> subjectBalance = PublishSubject.create();
-
-    private static final int SUBSCRIPTION_FAILED = 10300;
+    /*private final PublishSubject<LunoWebSocketCreate> subjectCreate = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketTrade> subjectTrade = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketDelete> subjectDelete = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketStatus> subjectStatus = PublishSubject.create();/**/
+    private final PublishSubject<LunoWebSocketOrderBook> subjectOrderBook = PublishSubject.create();
 
     private String apiKey;
     private String apiSecret;
 
-    private final Map<String, String> subscribedChannels = new HashMap<>();
-    private final SynchronizedValueFactory<Long> nonceFactory;
+    private static final String SEQUENCE = "sequence";
+    private static final String TRADE_UPDATES = "trade_updates";
+    private static final String CREATE_UPDATE = "create_update";
+    private static final String DELETE_UPDATE = "delete_update";
+    private static final String STATUS_UPDATE = "status_update";
+    private static final String STATUS = "status";
+    private static final String TIMESTAMP = "timestamp";
 
-    private final BlockingQueue<String> calculationQueue = new LinkedBlockingQueue<>();
-    private Disposable calculator;
 
-    public LunoStreamingService(String apiUrl,
-                                SynchronizedValueFactory<Long> nonceFactory) {
+    public LunoStreamingService(String apiUrl) {
         super(apiUrl, Integer.MAX_VALUE);
-        this.nonceFactory = nonceFactory;
     }
 
-    @Override
-    public Completable connect() {
-        return super.connect().doOnComplete(() -> {
-            this.calculator = Observable.interval(1, TimeUnit.SECONDS).subscribe(x -> requestCalcs());
-        });
+    public Completable connect(ProductSubscription... args) {
+        return super.connect();
     }
 
     @Override
     public Completable disconnect() {
-        if (calculator != null)
-            calculator.dispose();
         return super.disconnect();
     }
 
@@ -99,113 +56,40 @@ public class LunoStreamingService extends JsonNettyStreamingService {
         return null;
     }
 
-    @Override
+    /*@Override
     public boolean processArrayMassageSeparately() {
         return false;
-    }
+    }*/
 
     @Override
-    protected void handleMessage(JsonNode message) {
+    public void handleMessage(JsonNode message) {
 
-        if (message.isArray()) {
-            String type = message.get(1).asText();
-            if (type.equals("hb")) {
-                return;
-            }
+        JsonNode sequence = message.get(SEQUENCE);
+        if (sequence == null) {
+            LOG.error("Invalid message received, skipping. {}", message.toString());
+            return;
         }
 
-        JsonNode event = message.get(EVENT);
-        if (event != null) {
-            switch (event.textValue()) {
-                case INFO:
-                    JsonNode version = message.get(VERSION);
-                    if (version != null) {
-                        LOG.debug("Luno websocket API version: {}.", version.intValue());
-                    }
-                    if (isAuthenticated())
-                        auth();
-                    break;
-                case AUTH:
-                    if (message.get(STATUS).textValue().equals(LunoAuthRequestStatus.FAILED.name())) {
-                        LOG.error("Authentication error: {}", message.get(MESSAGE));
-                    }
-                    if (message.get(STATUS).textValue().equals(LunoAuthRequestStatus.OK.name())) {
-                        LOG.info("Authenticated successfully");
-                    }
-                    break;
-                case SUBSCRIBED: {
-                    String channel = message.get("channel").asText();
-                    String pair = message.get("pair").asText();
-                    String channelId = message.get(CHANNEL_ID).asText();
-                    try {
-                        String subscriptionUniqueId = getSubscriptionUniqueId(channel, pair);
-                        subscribedChannels.put(channelId, subscriptionUniqueId);
-                        LOG.debug("Register channel {}: {}", subscriptionUniqueId, channelId);
-                    } catch (Exception e) {
-                        LOG.error(e.getMessage());
-                    }
-                    break;
-                }
-                case UNSUBSCRIBED: {
-                    String channelId = message.get(CHANNEL_ID).asText();
-                    subscribedChannels.remove(channelId);
-                    break;
-                }
-                case ERROR:
-                    if (message.get("code").asInt() == SUBSCRIPTION_FAILED) {
-                    LOG.error("Error with message: " + message.get("symbol") + " " + message.get("msg"));
-                        return;
-                    }
-                    super.handleError(message, new ExchangeException("Error code: " + message.get(ERROR_CODE).asText()));
-                    break;
+        JsonNode status = message.get(STATUS);
+        if (status != null) {
+            // if we have `status` in the root, it is the message sent after connecting with the orderbook details.
+            try {
+                LunoWebSocketOrderBook lunoOrderBook =
+                    deserialize(message, LunoWebSocketOrderBook.class);
+                subjectOrderBook.onNext(lunoOrderBook);
+            } catch (JsonProcessingException e) {
+                LOG.error("Json parsing error on orderbook: {}", e.getMessage());
             }
         } else {
             try {
-                if ("0".equals(getChannelNameFromMessage(message)) && message.isArray() && message.size() == 3) {
-                    processAuthenticatedMessage(message);
-                    return;
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to get channel name from message", e);
+                LunoWebSocketUpdatesWrapper updates = deserialize(message, LunoWebSocketUpdatesWrapper.class);
+                /*subjectTrade.onNext(updates.getTradeUpdates());
+                subjectCreate.onNext(updates.getCreateUpdate());
+                subjectDelete.onNext(updates.getDeleteUpdate());
+                subjectStatus.onNext(updates.getStatusUpdate());*/
+            } catch (JsonProcessingException e) {
+                LOG.error("Json parsing error on updates: {}", e.getMessage());
             }
-            super.handleMessage(message);
-        }
-    }
-
-    private void processAuthenticatedMessage(JsonNode message) {
-        String type = message.get(1).asText();
-        JsonNode object = message.get(2);
-        switch (type) {
-            case "te":
-                LunoWebSocketAuthPreTrade preTrade = LunoStreamingAdapters.adaptPreTrade(object);
-                if (preTrade != null)
-                    subjectPreTrade.onNext(preTrade);
-                break;
-            case "tu":
-                LunoWebSocketAuthTrade trade = LunoStreamingAdapters.adaptTrade(object);
-                if (trade != null)
-                    subjectTrade.onNext(trade);
-                break;
-            case "os":
-                LunoStreamingAdapters.adaptOrders(object).forEach(subjectOrder::onNext);
-                break;
-            case "on":
-            case "ou":
-            case "oc":
-                LunoWebSocketAuthOrder order = LunoStreamingAdapters.adaptOrder(object);
-                if (order != null)
-                    subjectOrder.onNext(order);
-                break;
-            case "ws":
-                LunoStreamingAdapters.adaptBalances(object).forEach(subjectBalance::onNext);
-                break;
-            case "wu":
-                LunoWebSocketAuthBalance balance = LunoStreamingAdapters.adaptBalance(object);
-                if (balance != null)
-                    subjectBalance.onNext(balance);
-                break;
-            default:
-                LOG.debug("Unknown Luno authenticated message type {}. Content=", type, object);
         }
     }
 
@@ -219,55 +103,21 @@ public class LunoStreamingService extends JsonNettyStreamingService {
     }
 
     @Override
-    protected String getChannelNameFromMessage(JsonNode message) throws IOException {
-        String chanId = null;
-        if (message.has(CHANNEL_ID)) {
-            chanId = message.get(CHANNEL_ID).asText();
-        } else {
-            JsonNode jsonNode = message.get(0);
-            if (jsonNode != null) {
-                chanId = message.get(0).asText();
-            }
-        }
-        if (chanId == null) throw new IOException("Can't find CHANNEL_ID value in socket message: " + message.toString());
-        String subscribedChannel = subscribedChannels.get(chanId);
-        if (subscribedChannel != null)
-            return subscribedChannel;
-        return chanId; // In case bitfinex adds new channels, just fallback to the name in the message
+    protected String getChannelNameFromMessage(JsonNode message) {
+        // Luno does not have multiple channels, we need to connect multiple times.
+        return "";
     }
 
     @Override
     public String getSubscribeMessage(String channelName, Object... args) throws IOException {
-        LunoWebSocketSubscriptionMessage subscribeMessage = null;
-        if (args.length == 1) {
-            subscribeMessage =
-                    new LunoWebSocketSubscriptionMessage(channelName, (String) args[0]);
-        } else if (args.length == 3) {
-            subscribeMessage =
-                    new LunoWebSocketSubscriptionMessage(channelName, (String) args[0], (String) args[1],
-                            (String) args[2]);
-        }
-        if (subscribeMessage == null) throw new IOException("SubscribeMessage: Insufficient arguments");
-
-        return objectMapper.writeValueAsString(subscribeMessage);
+        // Luno does not have multiple channels, we need to connect multiple times.
+        return "";
     }
 
     @Override
     public String getUnsubscribeMessage(String channelName) throws IOException {
-        String channelId = null;
-        for (Map.Entry<String, String> entry : subscribedChannels.entrySet()) {
-            if (entry.getValue().equals(channelName)) {
-                channelId = entry.getKey();
-                break;
-            }
-        }
-
-        if (channelId == null) throw new IOException("Can't find channel unique name");
-
-        LunoWebSocketUnSubscriptionMessage subscribeMessage =
-                new LunoWebSocketUnSubscriptionMessage(channelId);
-        ObjectMapper objectMapper = StreamingObjectMapperHelper.getObjectMapper();
-        return objectMapper.writeValueAsString(subscribeMessage);
+        // Luno does not have multiple channels, so no unsubscribe either.
+        return "";
     }
 
     void setApiKey(String apiKey) {
@@ -283,26 +133,13 @@ public class LunoStreamingService extends JsonNettyStreamingService {
     }
 
     private void auth() {
-        long nonce = nonceFactory.createValue();
-        String payload = "AUTH" + nonce;
-        String signature;
-        try {
-            Mac macEncoder = Mac.getInstance(HMAC_SHA_384);
-            SecretKeySpec secretKeySpec = new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), HMAC_SHA_384);
-            macEncoder.init(secretKeySpec);
-            byte[] result = macEncoder.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            signature = DatatypeConverter.printHexBinary(result);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            LOG.error("auth. Sign failed error={}", e.getMessage());
-            return;
-        }
         LunoWebSocketAuth message = new LunoWebSocketAuth(
-                apiKey, payload, String.valueOf(nonce), signature.toLowerCase()
+                apiKey, apiSecret
         );
         sendObjectMessage(message);
     }
 
-    Observable<LunoWebSocketAuthOrder> getAuthenticatedOrders() {
+   /* Observable<LunoWebSocketAuthOrder> getAuthenticatedOrders() {
         return subjectOrder.share();
     }
 
@@ -316,52 +153,13 @@ public class LunoStreamingService extends JsonNettyStreamingService {
 
     Observable<LunoWebSocketAuthBalance> getAuthenticatedBalances() {
         return subjectBalance.share();
+    }*/
+
+    public Observable<LunoWebSocketOrderBook> getOrderBook() {
+        return subjectOrderBook.share();
     }
 
-    /**
-     * Call on receipt of a partial balance (missing available amount) to
-     * schedule the release of a full calculated amount at some point
-     * shortly.
-     *
-     * @param currency The currency code.
-     */
-    void scheduleCalculatedBalanceFetch(String currency) {
-        LOG.debug("Scheduling request for full calculated balances for: {}", currency);
-        calculationQueue.add(currency);
-    }
-
-    /**
-     * Luno generally doesn't supply calculated data, such as the available amount
-     * in a balance, unless this is specifically requested. You have to send a message
-     * down the socket requesting the full information. However, this is rate limited
-     * to 8 calculations a second and 30 per batch, so we queue up requests and dispatch
-     * them in batches of 8, once a second. See {@link #scheduleCalculatedBalanceFetch(String)}.
-     *
-     * <p>Details: https://docs.bitfinex.com/v2/docs/changelog#section--calc-input-message</p>
-     */
-    private void requestCalcs() {
-        Set<String> currencies = new HashSet<>();
-        do {
-            String nextRequest = calculationQueue.poll();
-            if (nextRequest == null)
-                break;
-            if (currencies.size() >= CALCULATION_BATCH_SIZE)
-                break;
-            currencies.add(nextRequest);
-        } while (true);
-
-        if (currencies.isEmpty())
-            return;
-
-        Object[] subscriptions = currencies.stream()
-            .map(LunoAdapters::adaptLunoCurrency)
-            .flatMap(currency -> WALLETS.stream().map(wallet -> "wallet_" + wallet + "_" + currency))
-            .map(calcName -> new String[] { calcName })
-            .toArray();
-        Object[] message = new Object[] {0, "calc", null, subscriptions};
-
-        LOG.debug("Requesting full calculated balances for: {} in {}", currencies, WALLETS);
-
-        sendObjectMessage(message);
+    private <T> T deserialize(JsonNode message, Class<T> valueType) throws JsonProcessingException {
+        return objectMapper.treeToValue(message, valueType);
     }
 }

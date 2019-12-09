@@ -10,24 +10,22 @@ import org.knowm.xchange.luno.LunoExchange;
 
 public class LunoStreamingExchange extends LunoExchange implements StreamingExchange {
 
-    static final String API_URI = "wss://ws.luno.com/api/1/stream/";
+    static final public String API_URI = "wss://ws.luno.com/api/1/stream/";
 
     private LunoStreamingService streamingService;
     private LunoStreamingMarketDataService streamingMarketDataService;
-    private LunoStreamingTradeService streamingTradeService;
-    private LunoStreamingAccountService streamingAccountService;
+    //private LunoStreamingService streamingTradeService;
+    //private LunoStreamingService streamingAccountService;
 
     @Override
     protected void initServices() {
         super.initServices();
         this.streamingService = createStreamingService();
-        //this.streamingMarketDataService = new BitfinexStreamingMarketDataService(streamingService);
-        this.streamingTradeService = new LunoStreamingTradeService(streamingService);
-        //this.streamingAccountService = new BitfinexStreamingAccountService(streamingService);
+        this.streamingMarketDataService = new LunoStreamingMarketDataService(streamingService);
     }
 
     private LunoStreamingService createStreamingService() {
-        LunoStreamingService streamingService = new LunoStreamingService(API_URI, getNonceFactory());
+        LunoStreamingService streamingService = new LunoStreamingService(API_URI);
         applyStreamingSpecification(getExchangeSpecification(), streamingService);
         if (StringUtils.isNotEmpty(exchangeSpecification.getApiKey())) {
             streamingService.setApiKey(exchangeSpecification.getApiKey());
@@ -39,7 +37,7 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
 
     @Override
     public Completable connect(ProductSubscription... args) {
-        return streamingService.connect();
+        return streamingService.connect(args);
     }
 
     @Override
@@ -76,20 +74,10 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         return streamingMarketDataService;
     }
 
-    @Override
-    public LunoStreamingAccountService getStreamingAccountService() {
-        return streamingAccountService;
-    }
-
-    @Override
-    public LunoStreamingTradeService getStreamingTradeService() {
-        return streamingTradeService;
+    public LunoStreamingService getStreamingService() {
+        return streamingService;
     }
 
     @Override
     public void useCompressedMessages(boolean compressedMessages) { streamingService.useCompressedMessages(compressedMessages); }
-
-    public boolean isAuthenticatedAlive() {
-        return streamingService != null && streamingService.isAuthenticated();
-    }
 }
