@@ -21,7 +21,6 @@ import java.util.List;
 
 public class LunoStreamingServiceTest {
 
-  private LunoStreamingExchange lunoStreamingExchange;
   private LunoStreamingService service;
 
   @Before
@@ -62,7 +61,7 @@ public class LunoStreamingServiceTest {
                     -124026355
             );
 
-    test.assertResult(expected);
+    test.assertValue(expected);
 
   }
 /*

@@ -1,0 +1,87 @@
+{
+  "type": "OPEN_ORDERS_UPDATE",
+  "data": [
+    {
+      "orderId": "38511e49-a755-4f8f-a2b1-232bae6967dc",
+      "side": "sell",
+      "remainingQuantity": "0.1",
+      "originalPrice": "10000",
+      "currencyPair": {
+        "id": 1,
+        "symbol": "BTCZAR",
+        "baseCurrency": {
+          "id": 2,
+          "symbol": "BTC",
+          "decimalPlaces": 8,
+          "isActive": true,
+          "shortName": "BTC",
+          "longName": "Bitcoin",
+          "currencyDecimalPlaces": 8,
+          "supportedWithdrawDecimalPlaces": 8
+        },
+        "quoteCurrency": {
+          "id": 1,
+          "symbol": "R",
+          "decimalPlaces": 2,
+          "isActive": true,
+          "shortName": "ZAR",
+          "longName": "Rand",
+          "currencyDecimalPlaces": 2,
+          "supportedWithdrawDecimalPlaces": 2
+        },
+        "shortName": "BTC/ZAR",
+        "exchange": "VALR",
+        "active": true,
+        "minBaseAmount": 0.0001,
+        "maxBaseAmount": 2,
+        "minQuoteAmount": 10,
+        "maxQuoteAmount": 100000
+      },
+      "createdAt": "2019-04-17T19:51:35.776Z",
+      "originalQuantity": "0.1",
+      "filledPercentage": "0.00",
+      "customerOrderId": ""
+    },
+    {
+      "orderId": "d1d9f20a-778c-4f4a-98a1-d336da960158",
+      "side": "sell",
+      "remainingQuantity": "0.1",
+      "originalPrice": "10000",
+      "currencyPair": {
+        "id": 1,
+        "symbol": "BTCZAR",
+        "baseCurrency": {
+          "id": 2,
+          "symbol": "BTC",
+          "decimalPlaces": 8,
+          "isActive": true,
+          "shortName": "BTC",
+          "longName": "Bitcoin",
+          "currencyDecimalPlaces": 8,
+          "supportedWithdrawDecimalPlaces": 8
+        },
+        "quoteCurrency": {
+          "id": 1,
+          "symbol": "R",
+          "decimalPlaces": 2,
+          "isActive": true,
+          "shortName": "ZAR",
+          "longName": "Rand",
+          "currencyDecimalPlaces": 2,
+          "supportedWithdrawDecimalPlaces": 2
+        },
+        "shortName": "BTC/ZAR",
+        "exchange": "VALR",
+        "active": true,
+        "minBaseAmount": 0.0001,
+        "maxBaseAmount": 2,
+        "minQuoteAmount": 10,
+        "maxQuoteAmount": 100000
+      },
+      "createdAt": "2019-04-20T13:48:44.922Z",
+      "originalQuantity": "0.1",
+      "filledPercentage": "0.00",
+      "customerOrderId": "4"
+    }
+  ]
+}

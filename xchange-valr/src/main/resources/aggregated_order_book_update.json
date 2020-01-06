@@ -1,0 +1,24 @@
+{
+  "type": "AGGREGATED_ORDERBOOK_UPDATE",
+  "currencyPairSymbol": "BTCZAR",
+  "data": {
+    "Asks": [
+      {
+        "side": "sell",
+        "quantity": "0.005",
+        "price": "9500",
+        "currencyPair": "BTCZAR",
+        "orderCount": 1
+      }
+    ],
+    "Bids": [
+      {
+        "side": "buy",
+        "quantity": "0.038",
+        "price": "9000",
+        "currencyPair": "BTCZAR",
+        "orderCount": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "type": "ORDER_STATUS_UPDATE",
+  "data": {
+    "orderId": "247dc157-bb5b-49af-b476-2f613b780697",
+    "orderStatusType": "Filled",
+    "currencyPair": {
+      "id": 1,
+      "symbol": "BTCZAR",
+      "baseCurrency": {
+        "id": 2,
+        "symbol": "BTC",
+        "decimalPlaces": 8,
+        "isActive": true,
+        "shortName": "BTC",
+        "longName": "Bitcoin",
+        "currencyDecimalPlaces": 8,
+        "supportedWithdrawDecimalPlaces": 8
+      },
+      "quoteCurrency": {
+        "id": 1,
+        "symbol": "R",
+        "decimalPlaces": 2,
+        "isActive": true,
+        "shortName": "ZAR",
+        "longName": "Rand",
+        "currencyDecimalPlaces": 2,
+        "supportedWithdrawDecimalPlaces": 2
+      },
+      "shortName": "BTC/ZAR",
+      "exchange": "VALR",
+      "active": true,
+      "minBaseAmount": 0.0001,
+      "maxBaseAmount": 2,
+      "minQuoteAmount": 10,
+      "maxQuoteAmount": 100000
+    },
+    "originalPrice": "80000",
+    "remainingQuantity": "0.01",
+    "originalQuantity": "0.01",
+    "orderSide": "buy",
+    "orderType": "limit",
+    "failedReason": "",
+    "orderUpdatedAt": "2019-05-10T14:47:24.826Z",
+    "orderCreatedAt": "2019-05-10T14:42:37.333Z",
+    "customerOrderId": "4"
+  }
+}

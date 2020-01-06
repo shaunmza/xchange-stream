@@ -1,0 +1,14 @@
+{
+  "type": "NEW_TRADE_BUCKET",
+  "currencyPairSymbol": "BTCZAR",
+  "data": {
+    "currencyPairSymbol": "BTCZAR",
+    "bucketPeriodInSeconds": 60,
+    "startTime": "2019-04-25T19:41:00Z",
+    "open": "9500",
+    "high": "9500",
+    "low": "9500",
+    "close": "9500",
+    "volume": "0"
+  }
+}

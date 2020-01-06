@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
@@ -76,6 +78,34 @@ public class LunoOrder {
                 "id'" + id + "'" +
                 "price'" + price + "'" +
                 "volume'" + volume + "'}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LunoOrder)) return false;
+        //if (!super.equals(o)) return false;
+
+        LunoOrder that = (LunoOrder) o;
+
+        for(int i = 0; i < this.getSigFields().length; ++i){
+            if (!Objects.equals(this.getSigFields()[i], that.getSigFields()[i])){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSigFields());
+    }
+
+    private Object[] getSigFields(){
+        Object[] result = {
+                id, price, volume
+        };
+        return result;
     }
 
 }

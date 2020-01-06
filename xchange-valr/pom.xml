@@ -11,5 +11,22 @@
 
     <artifactId>xchange-valr</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>xchange-stream-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>info.bitrich.xchange-stream</groupId>
+            <artifactId>service-netty</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.shaunmza</groupId>
+            <artifactId>XChange</artifactId>
+            <version>cb4055a</version>
+        </dependency>
+    </dependencies>
 
 </project>

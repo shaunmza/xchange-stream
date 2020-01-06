@@ -2,6 +2,8 @@
 package info.bitrich.xchangestream.luno.dto;
 
 import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -109,6 +111,34 @@ public class LunoWebSocketOrderBook {
                 "bids='" + bids + "'" +
                 "status='" + status + "'" +
                 "timestamp='" + timestamp + "'}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LunoWebSocketOrderBook)) return false;
+        //if (!super.equals(o)) return false;
+
+        LunoWebSocketOrderBook that = (LunoWebSocketOrderBook) o;
+
+        for(int i = 0; i < this.getSigFields().length; ++i){
+            if (!Objects.equals(this.getSigFields()[i], that.getSigFields()[i])){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSigFields());
+    }
+
+    private Object[] getSigFields(){
+        Object[] result = {
+                sequence, asks, bids, status, timestamp
+        };
+        return result;
     }
 
 }

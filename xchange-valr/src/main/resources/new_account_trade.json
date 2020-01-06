@@ -1,0 +1,11 @@
+{
+  "type": "NEW_ACCOUNT_TRADE",
+  "currencyPairSymbol": "BTCZAR",
+  "data": {
+    "price": "9500",
+    "quantity": "0.00105263",
+    "currencyPair": "BTCZAR",
+    "tradedAt": "2019-04-25T20:36:53.426Z",
+    "side": "buy"
+  }
+}

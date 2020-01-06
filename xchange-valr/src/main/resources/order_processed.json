@@ -1,0 +1,8 @@
+{
+  "type": "ORDER_PROCESSED",
+  "data": {
+    "orderId": "247dc157-bb5b-49af-b476-2f613b780697",
+    "success": true,
+    "failureReason": ""
+  }
+}
