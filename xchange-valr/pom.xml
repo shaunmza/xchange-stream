@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.github.shaunmza</groupId>
             <artifactId>XChange</artifactId>
-            <version>cb4055a</version>
+            <version>57ed849</version>
         </dependency>
     </dependencies>
 

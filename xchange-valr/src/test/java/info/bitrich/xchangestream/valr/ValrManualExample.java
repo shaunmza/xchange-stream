@@ -30,25 +30,13 @@ public class ValrManualExample {
     }
 
     public static void main(String[] args) throws Exception {
-        CertHelper.trustAllCerts();
 
         ExchangeSpecification defaultExchangeSpecification = new ExchangeSpecification(ValrStreamingExchange.class);
         defaultExchangeSpecification.setExchangeSpecificParametersItem(ConnectableService.BEFORE_CONNECTION_HANDLER, (Runnable) ValrManualExample::rateLimit);
 
         defaultExchangeSpecification.setShouldLoadRemoteMetaData(true);
-/*
-        defaultExchangeSpecification.setProxyHost("localhost");
-        defaultExchangeSpecification.setProxyPort(9999);
 
-        defaultExchangeSpecification.setExchangeSpecificParametersItem(StreamingExchange.SOCKS_PROXY_HOST, "localhost");
-        defaultExchangeSpecification.setExchangeSpecificParametersItem(StreamingExchange.SOCKS_PROXY_PORT, 8889);
-
-        defaultExchangeSpecification.setExchangeSpecificParametersItem(StreamingExchange.USE_SANDBOX, true);
-        defaultExchangeSpecification.setExchangeSpecificParametersItem(StreamingExchange.ACCEPT_ALL_CERITICATES, true);
-        defaultExchangeSpecification.setExchangeSpecificParametersItem(StreamingExchange.ENABLE_LOGGING_HANDLER, true);
-*/
-
-        StreamingExchange exchange = getExchange();//StreamingExchangeFactory.INSTANCE.createExchange(defaultExchangeSpecification);
+        StreamingExchange exchange = getExchange();
         exchange.connect().blockingAwait();
 
         Observable<OrderBook> orderBookObserver = exchange.getStreamingMarketDataService().getOrderBook(CurrencyPair.BTC_ZAR);
@@ -59,10 +47,6 @@ public class ValrManualExample {
             LOG.error("ERROR in getting order book: ", throwable);
         });
 
-        Disposable tickerSubscriber = exchange.getStreamingMarketDataService().getTicker(CurrencyPair.ETH_BTC).subscribe(ticker -> {
-            LOG.info("TICKER: {}", ticker);
-        }, throwable -> LOG.error("ERROR in getting ticker: ", throwable));
-
         Disposable tradesSubscriber = exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_ZAR)
                 .subscribe(trade -> {
                     LOG.info("TRADE: {}", trade);
@@ -72,7 +56,6 @@ public class ValrManualExample {
 
         Thread.sleep(10000);
 
-        tickerSubscriber.dispose();
         tradesSubscriber.dispose();
         orderBookSubscriber.dispose();
 

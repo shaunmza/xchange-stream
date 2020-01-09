@@ -218,14 +218,15 @@ public class ValrStreamingService extends JsonNettyStreamingService {
         String subscribedChannel = subscribedChannels.get(chanId);
         if (subscribedChannel != null)
             return subscribedChannel;
-        return chanId; // In case bitfinex adds new channels, just fallback to the name in the message
+        return chanId;
     }
 
     @Override
     public String getSubscribeMessage(String channelName, Object... args) throws IOException {
         if (args.length < 2) throw new IOException("SubscribeMessage: Insufficient arguments");
+        List<String> pairs = Arrays.asList((String) args[0]);
         ValrWebSocketSubscriptionMessage subscribeMessage = new ValrWebSocketSubscriptionMessage(
-                channelName, "SUBSCRIBE", (String) args[0], (List<String>) args[1]);
+                channelName, "SUBSCRIBE", (String) args[1], pairs);
 
         return objectMapper.writeValueAsString(subscribeMessage);
     }

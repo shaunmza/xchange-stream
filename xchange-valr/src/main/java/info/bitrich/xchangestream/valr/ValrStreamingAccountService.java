@@ -15,7 +15,6 @@ public class ValrStreamingAccountService implements StreamingAccountService {
     private static final Logger LOG = LoggerFactory.getLogger(ValrStreamingAccountService.class);
 
     private ValrStreamingService service;
-    private volatile Disposable accountInfo;
 
     public ValrStreamingAccountService(ValrStreamingService service) {
         this.service = service;
