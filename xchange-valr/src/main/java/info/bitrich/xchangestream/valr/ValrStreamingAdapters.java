@@ -46,15 +46,6 @@ class ValrStreamingAdapters {
             .build();
     }
 
-    static LimitOrder adaptLimitOrder(ValrWebSocketNewTradeData userTrade) {
-        CurrencyPair pair = toCurrencyPair(userTrade.getCurrencyPair());
-        return new LimitOrder.Builder(userTrade.getTakerSide() == "buy" ? BID : ASK, pair)
-                .id(null)
-                .originalAmount(new BigDecimal(userTrade.getQuantity()))
-                .timestamp(ValrUtils.toDate(userTrade.getTradedAt()))
-                .build();
-    }
-
     static LimitOrder adaptLimitOrder(ValrWebSocketOrderStatusUpdateData userTrade) {
         return new LimitOrder.Builder(userTrade.getOrderType() == "buy" ? BID : ASK, userTrade.getCurrencyPair().toCurrencyPair())
                 .id(userTrade.getOrderId())
@@ -86,7 +77,7 @@ class ValrStreamingAdapters {
                     new BigDecimal(ask.getQuantity()),
                     pair,
                     null,
-                    (Date)null,
+                    null,
                     new BigDecimal(ask.getPrice())
                     )
             );
@@ -98,7 +89,7 @@ class ValrStreamingAdapters {
                             new BigDecimal(bid.getQuantity()),
                             pair,
                             null,
-                            (Date)null,
+                            null,
                             new BigDecimal(bid.getPrice())
                     )
             );

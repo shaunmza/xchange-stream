@@ -6,12 +6,9 @@ import info.bitrich.xchangestream.service.ConnectableService;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import org.apache.commons.lang3.concurrent.TimedSemaphore;
-import org.knowm.xchange.Exchange;
-import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.OrderBook;
-import org.knowm.xchange.utils.CertHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
