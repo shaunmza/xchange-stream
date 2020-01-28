@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "api_key_id",
@@ -60,6 +62,34 @@ public class LunoWebSocketAuth {
         return "LunoWebSocketAuth{" +
                 "apiKeyId='" + apiKeyId + "'" +
                 "apiKeySecret='" + apiKeySecret + "'}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LunoWebSocketAuth)) return false;
+        //if (!super.equals(o)) return false;
+
+        LunoWebSocketAuth that = (LunoWebSocketAuth) o;
+
+        for(int i = 0; i < this.getSigFields().length; ++i){
+            if (!Objects.equals(this.getSigFields()[i], that.getSigFields()[i])){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSigFields());
+    }
+
+    private Object[] getSigFields(){
+        Object[] result = {
+                apiKeyId, apiKeySecret
+        };
+        return result;
     }
 
 }

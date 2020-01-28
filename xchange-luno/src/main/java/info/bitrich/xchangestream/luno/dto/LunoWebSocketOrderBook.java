@@ -21,9 +21,9 @@ public class LunoWebSocketOrderBook {
     @JsonProperty("sequence")
     private String sequence;
     @JsonProperty("asks")
-    private List<LunoOrder> asks = null;
+    private List<LunoWebSocketOrder> asks = null;
     @JsonProperty("bids")
-    private List<LunoOrder> bids = null;
+    private List<LunoWebSocketOrder> bids = null;
     @JsonProperty("status")
     private String status;
     @JsonProperty("timestamp")
@@ -44,7 +44,7 @@ public class LunoWebSocketOrderBook {
      * @param status
      * @param timestamp
      */
-    public LunoWebSocketOrderBook(String sequence, List<LunoOrder> asks, List<LunoOrder> bids, String status, Integer timestamp) {
+    public LunoWebSocketOrderBook(String sequence, List<LunoWebSocketOrder> asks, List<LunoWebSocketOrder> bids, String status, Integer timestamp) {
         super();
         this.sequence = sequence;
         this.asks = asks;
@@ -64,22 +64,22 @@ public class LunoWebSocketOrderBook {
     }
 
     @JsonProperty("asks")
-    public List<LunoOrder> getAsks() {
+    public List<LunoWebSocketOrder> getAsks() {
         return asks;
     }
 
     @JsonProperty("asks")
-    public void setAsks(List<LunoOrder> asks) {
+    public void setAsks(List<LunoWebSocketOrder> asks) {
         this.asks = asks;
     }
 
     @JsonProperty("bids")
-    public List<LunoOrder> getBids() {
+    public List<LunoWebSocketOrder> getBids() {
         return bids;
     }
 
     @JsonProperty("bids")
-    public void setBids(List<LunoOrder> bids) {
+    public void setBids(List<LunoWebSocketOrder> bids) {
         this.bids = bids;
     }
 

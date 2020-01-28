@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "sequence",
@@ -19,13 +22,13 @@ public class LunoWebSocketUpdatesWrapper {
     @JsonProperty("sequence")
     private String sequence;
     @JsonProperty("trade_updates")
-    private Object tradeUpdates;
+    private List<LunoWebSocketTradeUpdate> tradeUpdates;
     @JsonProperty("create_update")
-    private Object createUpdate;
+    private LunoWebSocketCreateUpdate createUpdate;
     @JsonProperty("delete_update")
-    private Object deleteUpdate;
+    private LunoWebSocketDeleteUpdate deleteUpdate;
     @JsonProperty("status_update")
-    private Object statusUpdate;
+    private LunoWebSocketStatusUpdate statusUpdate;
     @JsonProperty("timestamp")
     private Integer timestamp;
 
@@ -45,7 +48,9 @@ public class LunoWebSocketUpdatesWrapper {
      * @param tradeUpdates
      * @param timestamp
      */
-    public LunoWebSocketUpdatesWrapper(String sequence, Object tradeUpdates, Object createUpdate, Object deleteUpdate, Object statusUpdate, Integer timestamp) {
+    public LunoWebSocketUpdatesWrapper(String sequence, List<LunoWebSocketTradeUpdate> tradeUpdates,
+                                       LunoWebSocketCreateUpdate createUpdate, LunoWebSocketDeleteUpdate deleteUpdate,
+                                       LunoWebSocketStatusUpdate statusUpdate, Integer timestamp) {
         super();
         this.sequence = sequence;
         this.tradeUpdates = tradeUpdates;
@@ -66,42 +71,42 @@ public class LunoWebSocketUpdatesWrapper {
     }
 
     @JsonProperty("trade_updates")
-    public Object getTradeUpdates() {
+    public List<LunoWebSocketTradeUpdate> getTradeUpdates() {
         return tradeUpdates;
     }
 
     @JsonProperty("trade_updates")
-    public void setTradeUpdates(Object tradeUpdates) {
+    public void setTradeUpdates(List<LunoWebSocketTradeUpdate> tradeUpdates) {
         this.tradeUpdates = tradeUpdates;
     }
 
     @JsonProperty("create_update")
-    public Object getCreateUpdate() {
+    public LunoWebSocketCreateUpdate getCreateUpdate() {
         return createUpdate;
     }
 
     @JsonProperty("create_update")
-    public void setCreateUpdate(Object createUpdate) {
+    public void setCreateUpdate(LunoWebSocketCreateUpdate createUpdate) {
         this.createUpdate = createUpdate;
     }
 
     @JsonProperty("delete_update")
-    public Object getDeleteUpdate() {
+    public LunoWebSocketDeleteUpdate getDeleteUpdate() {
         return deleteUpdate;
     }
 
     @JsonProperty("delete_update")
-    public void setDeleteUpdate(Object deleteUpdate) {
+    public void setDeleteUpdate(LunoWebSocketDeleteUpdate deleteUpdate) {
         this.deleteUpdate = deleteUpdate;
     }
 
     @JsonProperty("status_update")
-    public Object getStatusUpdate() {
+    public LunoWebSocketStatusUpdate getStatusUpdate() {
         return statusUpdate;
     }
 
     @JsonProperty("status_update")
-    public void setStatusUpdate(Object statusUpdate) {
+    public void setStatusUpdate(LunoWebSocketStatusUpdate statusUpdate) {
         this.statusUpdate = statusUpdate;
     }
 
@@ -124,6 +129,34 @@ public class LunoWebSocketUpdatesWrapper {
         "deleteUpdate='" + deleteUpdate + "'" +
         "statusUpdate='" + statusUpdate + "'" +
         "timestamp='" + timestamp + "'}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LunoWebSocketUpdatesWrapper)) return false;
+        //if (!super.equals(o)) return false;
+
+        LunoWebSocketUpdatesWrapper that = (LunoWebSocketUpdatesWrapper) o;
+
+        for(int i = 0; i < this.getSigFields().length; ++i){
+            if (!Objects.equals(this.getSigFields()[i], that.getSigFields()[i])){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSigFields());
+    }
+
+    private Object[] getSigFields(){
+        Object[] result = {
+                sequence, tradeUpdates, createUpdate, deleteUpdate, statusUpdate, timestamp
+        };
+        return result;
     }
 
 }

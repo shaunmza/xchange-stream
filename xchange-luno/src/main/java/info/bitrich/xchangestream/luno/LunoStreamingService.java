@@ -14,16 +14,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class LunoStreamingService extends JsonNettyStreamingService {
 
     private static final Logger LOG = LoggerFactory.getLogger(LunoStreamingService.class);
 
-    /*private final PublishSubject<LunoWebSocketCreate> subjectCreate = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketTrade> subjectTrade = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketDelete> subjectDelete = PublishSubject.create();
-    private final PublishSubject<LunoWebSocketStatus> subjectStatus = PublishSubject.create();/**/
+    private final PublishSubject<LunoWebSocketCreateUpdate> subjectCreate = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketTradeUpdate> subjectTrade = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketDeleteUpdate> subjectDelete = PublishSubject.create();
+    private final PublishSubject<LunoWebSocketStatusUpdate> subjectStatus = PublishSubject.create();
     private final PublishSubject<LunoWebSocketOrderBook> subjectOrderBook = PublishSubject.create();
 
     private String apiKey;
@@ -83,10 +85,14 @@ public class LunoStreamingService extends JsonNettyStreamingService {
         } else {
             try {
                 LunoWebSocketUpdatesWrapper updates = deserialize(message, LunoWebSocketUpdatesWrapper.class);
-                /*subjectTrade.onNext(updates.getTradeUpdates());
+                Iterator trades = updates.getTradeUpdates().iterator();
+
+                while(trades.hasNext()) {
+                    subjectTrade.onNext((LunoWebSocketTradeUpdate)trades.next());
+                }
                 subjectCreate.onNext(updates.getCreateUpdate());
                 subjectDelete.onNext(updates.getDeleteUpdate());
-                subjectStatus.onNext(updates.getStatusUpdate());*/
+                subjectStatus.onNext(updates.getStatusUpdate());
             } catch (JsonProcessingException e) {
                 LOG.error("Json parsing error on updates: {}", e.getMessage());
             }
@@ -128,32 +134,21 @@ public class LunoStreamingService extends JsonNettyStreamingService {
         this.apiSecret = apiSecret;
     }
 
-    boolean isAuthenticated() {
-        return StringUtils.isNotEmpty(apiKey);
+   Observable<LunoWebSocketCreateUpdate> getCreateUpdates() {
+        return subjectCreate.share();
     }
 
-    private void auth() {
-        LunoWebSocketAuth message = new LunoWebSocketAuth(
-                apiKey, apiSecret
-        );
-        sendObjectMessage(message);
-    }
-
-   /* Observable<LunoWebSocketAuthOrder> getAuthenticatedOrders() {
-        return subjectOrder.share();
-    }
-
-    Observable<LunoWebSocketAuthPreTrade> getAuthenticatedPreTrades() {
-        return subjectPreTrade.share();
-    }
-
-    Observable<LunoWebSocketAuthTrade> getAuthenticatedTrades() {
+    Observable<LunoWebSocketTradeUpdate> getTradeUpdates() {
         return subjectTrade.share();
     }
 
-    Observable<LunoWebSocketAuthBalance> getAuthenticatedBalances() {
-        return subjectBalance.share();
-    }*/
+    Observable<LunoWebSocketDeleteUpdate> getDeleteUpdates() {
+        return subjectDelete.share();
+    }
+
+    Observable<LunoWebSocketStatusUpdate> getStatusUpdates() {
+        return subjectStatus.share();
+    }
 
     public Observable<LunoWebSocketOrderBook> getOrderBook() {
         return subjectOrderBook.share();
