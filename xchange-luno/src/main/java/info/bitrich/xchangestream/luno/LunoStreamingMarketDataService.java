@@ -37,7 +37,7 @@ public class LunoStreamingMarketDataService implements StreamingMarketDataServic
                     ));
                 }
 
-                /*if (tradeObservable == null) {
+                if (tradeObservable == null) {
                     tradeObservable = pair.getValue().getTradeUpdates().map(
                             s -> LunoStreamingAdapters.adaptTrade(s, currencyPair)
                     );
@@ -45,7 +45,7 @@ public class LunoStreamingMarketDataService implements StreamingMarketDataServic
                     tradeObservable.mergeWith(pair.getValue().getTradeUpdates().map(
                             s -> LunoStreamingAdapters.adaptTrade(s, currencyPair)
                     ));
-                }*/
+                }
 
                 if (tradeObservable == null) {
                     tradeObservable = pair.getValue().getDeleteUpdates().map(
@@ -64,7 +64,23 @@ public class LunoStreamingMarketDataService implements StreamingMarketDataServic
 
     @Override
     public Observable<Ticker> getTicker(CurrencyPair currencyPair, Object... args) {
-        throw new NotYetImplementedForExchangeException();
+        Observable<Ticker> tickerObservable = null;
+
+        for (Map.Entry<CurrencyPair, LunoStreamingService> pair : this.streamingServices.entrySet()) {
+            if (pair.getKey().toString().equals(currencyPair.toString())) {
+                if (tickerObservable == null) {
+                    tickerObservable = pair.getValue().getTradeUpdates().map(
+                            s -> LunoStreamingAdapters.adaptTicker(s, currencyPair)
+                    );
+                } else {
+                    tickerObservable.mergeWith(pair.getValue().getTradeUpdates().map(
+                            s -> LunoStreamingAdapters.adaptTicker(s, currencyPair)
+                    ));
+                }
+            }
+        }
+
+        return tickerObservable;
     }
 
     @Override

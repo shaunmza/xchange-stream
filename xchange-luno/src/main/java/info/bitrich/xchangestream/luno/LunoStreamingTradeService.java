@@ -6,6 +6,7 @@ import io.reactivex.Observable;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.trade.UserTrade;
+import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,16 +53,17 @@ public class LunoStreamingTradeService implements StreamingTradeService {
      */
     @Override
     public Observable<UserTrade> getUserTrades(CurrencyPair currencyPair, Object... args) {
-        Observable<UserTrade> tradeObservable = null;
+        throw new NotYetImplementedForExchangeException();
+        /*Observable<UserTrade> tradeObservable = null;
 
         for (Map.Entry<CurrencyPair, LunoStreamingService> pair : this.streamingServices.entrySet()) {
             if (pair.getKey().toString().equals(currencyPair.toString())) {
                 if (tradeObservable == null) {
-                    tradeObservable = pair.getValue().getTradeUpdates().map(
+                    tradeObservable = pair.getValue().getCreateUpdates().map(
                             s -> LunoStreamingAdapters.adaptUserTrade(s, currencyPair)
                     );
                 } else {
-                    tradeObservable.mergeWith(pair.getValue().getTradeUpdates().map(
+                    tradeObservable.mergeWith(pair.getValue().getCreateUpdates().map(
                             s -> LunoStreamingAdapters.adaptUserTrade(s, currencyPair)
                     ));
                 }
@@ -78,6 +80,6 @@ public class LunoStreamingTradeService implements StreamingTradeService {
             }
         }
 
-        return tradeObservable;
+        return tradeObservable;*/
     }
 }

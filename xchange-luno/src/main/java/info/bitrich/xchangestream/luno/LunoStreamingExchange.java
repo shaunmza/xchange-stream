@@ -2,6 +2,7 @@ package info.bitrich.xchangestream.luno;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
+import info.bitrich.xchangestream.luno.dto.LunoWebSocketAuth;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +22,9 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
     private LunoStreamingTradeService streamingTradeService;
     private LunoStreamingAccountService streamingAccountService;
 
+    private String apiKey;
+    private String apiSecret;
+
     @Override
     protected void initServices() {
         super.initServices();
@@ -32,9 +36,10 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
             LunoStreamingService streamingService = new LunoStreamingService(API_URI + LunoUtil.toLunoPair(currencyPair));
             applyStreamingSpecification(getExchangeSpecification(), streamingService);
             if (StringUtils.isNotEmpty(exchangeSpecification.getApiKey())) {
-                streamingService.setApiKey(exchangeSpecification.getApiKey());
-                streamingService.setApiSecret(exchangeSpecification.getSecretKey());
+                setApiKey(exchangeSpecification.getApiKey());
+                setApiSecret(exchangeSpecification.getSecretKey());
             }
+
             streamingServices.put(currencyPair, streamingService);
                 })
 
@@ -69,7 +74,7 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
 
         List<Completable> completables = new ArrayList<>();
         this.streamingServices.forEach(((currencyPair, lunoStreamingService) -> {
-            completables.add(lunoStreamingService.connect());
+            completables.add(lunoStreamingService.connect(args));
         }));
 
         return Completable.concat(completables);
@@ -112,8 +117,13 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         for (Map.Entry<CurrencyPair, LunoStreamingService> pair : this.streamingServices.entrySet()) {
             if (a == null){
                 a = pair.getValue().subscribeConnectionSuccess();
+            } else {
+                a = pair.getValue().subscribeConnectionSuccess().mergeWith(a);
             }
-            a = pair.getValue().subscribeConnectionSuccess().mergeWith(a);
+           /* LunoWebSocketAuth message = new LunoWebSocketAuth(
+                    this.apiKey, this.apiSecret
+            );*/
+            pair.getValue().sendMessage(String.format("{   \"api_key_id\": \"%s\",   \"api_key_secret\": \"%s\" }", this.apiKey, this.apiSecret));
         }
 
         return a;
@@ -148,6 +158,14 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         this.streamingServices.forEach((currencyPair, lunoStreamingService) -> {
             lunoStreamingService.useCompressedMessages(compressedMessages);
         });
+    }
+
+    void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    void setApiSecret(String apiSecret) {
+        this.apiSecret = apiSecret;
     }
 
 }

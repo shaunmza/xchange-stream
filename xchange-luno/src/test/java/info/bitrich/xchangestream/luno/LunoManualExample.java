@@ -23,7 +23,7 @@ public class LunoManualExample {
         try {
             rateLimiter.acquire();
         } catch (InterruptedException e) {
-            LOG.warn("Valr connection throttle control has been interrupted");
+            LOG.warn("Luno connection throttle control has been interrupted");
         }
     }
 
@@ -52,16 +52,24 @@ public class LunoManualExample {
             LOG.error("ERROR in getting order book: ", throwable);
         });
 
-        Disposable tradesSubscriber = exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_ZAR)
-                .subscribe(trade -> {
-                    LOG.info("TRADE: {}", trade);
+        Disposable orderChangesSubscriber = exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_ZAR)
+                .subscribe(order -> {
+                    LOG.info("ORDER: {}", order);
                 }, throwable -> {
-                    LOG.error("ERROR in getting trade: ", throwable);
+                    LOG.error("ERROR in getting order: ", throwable);
+                });
+
+        Disposable tickerSubscriber = exchange.getStreamingMarketDataService().getTicker(CurrencyPair.BTC_ZAR)
+                .subscribe(trade -> {
+                    LOG.info("TICKER: {}", trade);
+                }, throwable -> {
+                    LOG.error("ERROR in getting ticker: ", throwable);
                 });
 
         Thread.sleep(60000);
 
-        tradesSubscriber.dispose();
+        orderChangesSubscriber.dispose();
+        tickerSubscriber.dispose();
         orderBookSubscriber.dispose();
 
         LOG.info("disconnecting...");

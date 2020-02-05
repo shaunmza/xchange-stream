@@ -4,6 +4,7 @@ import info.bitrich.xchangestream.luno.dto.*;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.OrderBook;
+import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.dto.trade.UserTrade;
@@ -64,36 +65,52 @@ class LunoStreamingAdapters {
                 .build();
     }
 
-    static UserTrade adaptUserTrade(LunoWebSocketTradeUpdate trade, CurrencyPair currencyPair) {
-        UserTrade userTrade = new UserTrade.Builder()
-                    .currencyPair(currencyPair)
-                    .id(trade.getMakerOrderId())
-                    .build();
+    static Trade adaptTrade(LunoWebSocketCreateUpdate createUpdate, CurrencyPair currencyPair) {
+        Trade trade = new UserTrade.Builder()
+                .orderId(createUpdate.getOrderId())
+                .currencyPair(currencyPair)
+                .type(Order.OrderType.valueOf(createUpdate.getType()))
+                .originalAmount(new BigDecimal(createUpdate.getVolume()))
+                .price(new BigDecimal(createUpdate.getPrice()))
+                .build();
 
-        return userTrade;
+        return trade;
     }
 
     static UserTrade adaptUserTrade(LunoWebSocketDeleteUpdate trade, CurrencyPair currencyPair) {
         return new UserTrade.Builder()
                 .currencyPair(currencyPair)
-                .id(trade.getOrderId())
+                .orderId(trade.getOrderId())
                 .build();
     }
 
-    static Trade adaptTrade(LunoWebSocketCreateUpdate trade, CurrencyPair currencyPair) {
-        return new Trade.Builder()
+    static Ticker adaptTicker(LunoWebSocketTradeUpdate trade, CurrencyPair currencyPair) {
+        BigDecimal bid = BigDecimal.ZERO;
+        BigDecimal ask = BigDecimal.ZERO;
+        BigDecimal price = new BigDecimal(trade.getCounter()).divide(new BigDecimal(trade.getBase()));
+        //if (Order.OrderType.valueOf(trade.getType()) == BID) {
+            bid = price;
+        //} else {
+        //    ask = price;
+        //}
+        return new Ticker.Builder()
                 .currencyPair(currencyPair)
-                .id(trade.getOrderId())
-                .price(new BigDecimal(trade.getPrice()))
-                .originalAmount(new BigDecimal(trade.getVolume()))
+                .volume(new BigDecimal(trade.getBase()))
+                .bid(bid)
+                .ask(ask)
                 .build();
     }
 
-    static Trade adaptTrade(LunoWebSocketTradeUpdate trade, CurrencyPair currencyPair) {
-        return new Trade.Builder()
+    static Trade adaptTrade(LunoWebSocketTradeUpdate tradeUpdate, CurrencyPair currencyPair) {
+        Trade trade = new UserTrade.Builder()
                 .currencyPair(currencyPair)
-                .id(trade.getMakerOrderId())
+                .originalAmount(new BigDecimal(tradeUpdate.getBase()))
+                .price(new BigDecimal(tradeUpdate.getCounter()).divide(new BigDecimal(tradeUpdate.getBase())))
                 .build();
+
+        trade.setMakerOrderId(tradeUpdate.getMakerOrderId());
+        trade.setTakerOrderId(tradeUpdate.getTakerOrderId());
+        return trade;
     }
 
     static Trade adaptTrade(LunoWebSocketDeleteUpdate trade, CurrencyPair currencyPair) {
