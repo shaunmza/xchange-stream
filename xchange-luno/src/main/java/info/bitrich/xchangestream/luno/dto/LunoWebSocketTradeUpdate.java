@@ -12,7 +12,8 @@ import java.util.Objects;
         "base",
         "counter",
         "maker_order_id",
-        "taker_order_id"
+        "taker_order_id",
+        "order_id"
 })
 public class LunoWebSocketTradeUpdate {
 
@@ -24,6 +25,8 @@ public class LunoWebSocketTradeUpdate {
     private String makerOrderId;
     @JsonProperty("taker_order_id")
     private String takerOrderId;
+    @JsonProperty("order_id")
+    private String orderId;
 
     /**
      * No args constructor for use in serialization
@@ -34,17 +37,19 @@ public class LunoWebSocketTradeUpdate {
 
     /**
      *
-     * @param takerOrderId
+     * @param base
      * @param counter
      * @param makerOrderId
-     * @param base
+     * @param takerOrderId
+     * @param orderId
      */
-    public LunoWebSocketTradeUpdate(String base, String counter, String makerOrderId, String takerOrderId) {
+    public LunoWebSocketTradeUpdate(String base, String counter, String makerOrderId, String takerOrderId, String orderId) {
         super();
         this.base = base;
         this.counter = counter;
         this.makerOrderId = makerOrderId;
         this.takerOrderId = takerOrderId;
+        this.orderId = orderId;
     }
 
     @JsonProperty("base")
@@ -107,6 +112,21 @@ public class LunoWebSocketTradeUpdate {
         return this;
     }
 
+    @JsonProperty("order_id")
+    public String getOrderId() {
+        return orderId;
+    }
+
+    @JsonProperty("order_id")
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public LunoWebSocketTradeUpdate withOrderId(String orderId) {
+        this.orderId = orderId;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -130,7 +150,7 @@ public class LunoWebSocketTradeUpdate {
 
     private Object[] getSigFields(){
         Object[] result = {
-                base, counter, makerOrderId, takerOrderId
+                base, counter, makerOrderId, takerOrderId, orderId
         };
         return result;
     }

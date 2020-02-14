@@ -8,22 +8,17 @@ import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.dto.trade.UserTrade;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
 
 import static org.knowm.xchange.dto.Order.OrderType.ASK;
 import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 class LunoStreamingAdapters {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LunoStreamingAdapters.class);
-
-    protected static OrderBook adaptOrderBooks(LunoWebSocketOrderBook lunoOrderBook, CurrencyPair currencyPair) {
+    protected static OrderBook adaptOrderBook(LunoWebSocketOrderBook lunoOrderBook, CurrencyPair currencyPair) {
         List<LimitOrder> asks = new ArrayList<>(0);
         List<LimitOrder> bids = new ArrayList<>(0);
 
@@ -77,13 +72,6 @@ class LunoStreamingAdapters {
         return trade;
     }
 
-    static UserTrade adaptUserTrade(LunoWebSocketDeleteUpdate trade, CurrencyPair currencyPair) {
-        return new UserTrade.Builder()
-                .currencyPair(currencyPair)
-                .orderId(trade.getOrderId())
-                .build();
-    }
-
     static Ticker adaptTicker(LunoWebSocketTradeUpdate trade, CurrencyPair currencyPair) {
         BigDecimal bid = BigDecimal.ZERO;
         BigDecimal ask = BigDecimal.ZERO;
@@ -102,7 +90,8 @@ class LunoStreamingAdapters {
     }
 
     static Trade adaptTrade(LunoWebSocketTradeUpdate tradeUpdate, CurrencyPair currencyPair) {
-        Trade trade = new UserTrade.Builder()
+        Trade trade = new Trade.Builder()
+                .id(tradeUpdate.getOrderId())
                 .currencyPair(currencyPair)
                 .originalAmount(new BigDecimal(tradeUpdate.getBase()))
                 .price(new BigDecimal(tradeUpdate.getCounter()).divide(new BigDecimal(tradeUpdate.getBase())))
