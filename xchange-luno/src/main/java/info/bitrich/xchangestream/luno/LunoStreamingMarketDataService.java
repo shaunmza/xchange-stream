@@ -13,17 +13,13 @@ import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class LunoStreamingMarketDataService implements StreamingMarketDataService {
-    private static final Logger LOG = LoggerFactory.getLogger(LunoStreamingMarketDataService.class);
 
     private final Map<CurrencyPair, LunoStreamingService> streamingServices;
     private final Map<CurrencyPair, OrderBook> orderBookMap;
@@ -61,23 +57,6 @@ public class LunoStreamingMarketDataService implements StreamingMarketDataServic
     @Override
     public Observable<Ticker> getTicker(CurrencyPair currencyPair, Object... args) {
         throw new NotYetImplementedForExchangeException();
-        /*Observable<Ticker> tickerObservable = null;
-
-        for (Map.Entry<CurrencyPair, LunoStreamingService> pair : this.streamingServices.entrySet()) {
-            if (pair.getKey().toString().equals(currencyPair.toString())) {
-                if (tickerObservable == null) {
-                    tickerObservable = pair.getValue().getTradeUpdates().map(
-                            s -> LunoStreamingAdapters.adaptTicker(s, currencyPair)
-                    );
-                } else {
-                    tickerObservable.mergeWith(pair.getValue().getTradeUpdates().map(
-                            s -> LunoStreamingAdapters.adaptTicker(s, currencyPair)
-                    ));
-                }
-            }
-        }
-
-        return tickerObservable;*/
     }
 
     @Override
@@ -114,7 +93,6 @@ public class LunoStreamingMarketDataService implements StreamingMarketDataServic
 
     private OrderBook initialiseOrderBook(LunoWebSocketOrderBook lunoOrderBook, CurrencyPair currencyPair){
         OrderBook orderBook = LunoStreamingAdapters.adaptOrderBook(lunoOrderBook, currencyPair);
-        LOG.info("Order book: {}", orderBook);
         orderBookMap.put(currencyPair, orderBook);
 
         return orderBook;

@@ -2,9 +2,7 @@ package info.bitrich.xchangestream.luno;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
-import info.bitrich.xchangestream.luno.dto.LunoWebSocketAuth;
 import io.reactivex.Completable;
-import io.reactivex.Observable;
 import org.apache.commons.lang3.StringUtils;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.currency.CurrencyPair;
@@ -22,9 +20,6 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
     private LunoStreamingTradeService streamingTradeService;
     private LunoStreamingAccountService streamingAccountService;
 
-    private String apiKey;
-    private String apiSecret;
-
     @Override
     protected void initServices() {
         super.initServices();
@@ -33,16 +28,15 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
     private Map<CurrencyPair, LunoStreamingService> createStreamingServices(List<CurrencyPair> currencyPairs) {
         Map<CurrencyPair, LunoStreamingService> streamingServices = new HashMap<>();
         currencyPairs.forEach((currencyPair -> {
-            LunoStreamingService streamingService = new LunoStreamingService(API_URI + LunoUtil.toLunoPair(currencyPair));
-            applyStreamingSpecification(getExchangeSpecification(), streamingService);
-            if (StringUtils.isNotEmpty(exchangeSpecification.getApiKey())) {
-                setApiKey(exchangeSpecification.getApiKey());
-                setApiSecret(exchangeSpecification.getSecretKey());
-            }
+                LunoStreamingService streamingService = new LunoStreamingService(API_URI + LunoUtil.toLunoPair(currencyPair));
+                applyStreamingSpecification(getExchangeSpecification(), streamingService);
+                if (StringUtils.isNotEmpty(exchangeSpecification.getApiKey())) {
+                    streamingService.setApiKey(exchangeSpecification.getApiKey());
+                    streamingService.setApiSecret(exchangeSpecification.getSecretKey());
+                }
 
-            streamingServices.put(currencyPair, streamingService);
-                })
-
+                streamingServices.put(currencyPair, streamingService);
+            })
         );
 
         return streamingServices;
@@ -56,7 +50,6 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         }
 
         ProductSubscription subscriptions = args[0];
-
         List<CurrencyPair> currencyPairs = new ArrayList<>();
         currencyPairs.addAll(subscriptions.getOrderBook());
         currencyPairs.addAll(subscriptions.getOrders());
@@ -64,9 +57,7 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         currencyPairs.addAll(subscriptions.getTrades());
         currencyPairs.addAll(subscriptions.getUserTrades());
 
-        Map<CurrencyPair, LunoStreamingService> streamingServices;
         this.streamingServices = createStreamingServices(currencyPairs);
-
 
         streamingMarketDataService = new LunoStreamingMarketDataService(this.streamingServices);
         streamingAccountService = new LunoStreamingAccountService(this.streamingServices);
@@ -105,30 +96,6 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
         return isSocketOpen;
     }
 
-    /*@Override
-    public Observable<Throwable> reconnectFailure() {
-        return streamingService.subscribeReconnectFailure();
-    }*/
-
-    @Override
-    public Observable<Object> connectionSuccess() {
-        Observable a = null;
-
-        for (Map.Entry<CurrencyPair, LunoStreamingService> pair : this.streamingServices.entrySet()) {
-            if (a == null){
-                a = pair.getValue().subscribeConnectionSuccess();
-            } else {
-                a = pair.getValue().subscribeConnectionSuccess().mergeWith(a);
-            }
-           /* LunoWebSocketAuth message = new LunoWebSocketAuth(
-                    this.apiKey, this.apiSecret
-            );*/
-            pair.getValue().sendMessage(String.format("{   \"api_key_id\": \"%s\",   \"api_key_secret\": \"%s\" }", this.apiKey, this.apiSecret));
-        }
-
-        return a;
-    }
-
     @Override
     public ExchangeSpecification getDefaultExchangeSpecification() {
         ExchangeSpecification spec = super.getDefaultExchangeSpecification();
@@ -136,7 +103,6 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
 
         return spec;
     }
-
 
     @Override
     public LunoStreamingMarketDataService getStreamingMarketDataService() {
@@ -159,13 +125,4 @@ public class LunoStreamingExchange extends LunoExchange implements StreamingExch
             lunoStreamingService.useCompressedMessages(compressedMessages);
         });
     }
-
-    void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    void setApiSecret(String apiSecret) {
-        this.apiSecret = apiSecret;
-    }
-
 }

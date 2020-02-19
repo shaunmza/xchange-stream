@@ -9,7 +9,6 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensio
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,13 +21,15 @@ public class LunoStreamingService extends JsonNettyStreamingService {
 
     private static final Logger LOG = LoggerFactory.getLogger(LunoStreamingService.class);
 
+    private String apiKey;
+    private String apiSecret;
+    private int pauseBeforeLoginMessage = 5;
+
     private final PublishSubject<LunoWebSocketCreateUpdate> subjectCreate = PublishSubject.create();
     private final PublishSubject<LunoWebSocketTradeUpdate> subjectTrade = PublishSubject.create();
     private final PublishSubject<LunoWebSocketDeleteUpdate> subjectDelete = PublishSubject.create();
     private final PublishSubject<LunoWebSocketStatusUpdate> subjectStatus = PublishSubject.create();
     private final PublishSubject<LunoWebSocketOrderBook> subjectOrderBook = PublishSubject.create();
-
-
 
     private static final String SEQUENCE = "sequence";
     private static final String TRADE_UPDATES = "trade_updates";
@@ -38,13 +39,25 @@ public class LunoStreamingService extends JsonNettyStreamingService {
     private static final String STATUS = "status";
     private static final String TIMESTAMP = "timestamp";
 
+    private Integer lastSequence;
+
 
     public LunoStreamingService(String apiUrl) {
         super(apiUrl, Integer.MAX_VALUE);
     }
 
     public Completable connect(ProductSubscription... args) {
-        return super.connect();
+        return connectSendLoginMessage();
+    }
+
+    private Completable connectSendLoginMessage(){
+        Completable c = super.connect();
+        c.subscribe(() -> {
+            Thread.sleep(pauseBeforeLoginMessage*1000);
+            sendMessage(String.format("{\"api_key_id\":\"%s\",\"api_key_secret\":\"%s\"}", this.apiKey, this.apiSecret));
+        });
+
+        return c;
     }
 
     @Override
@@ -57,19 +70,30 @@ public class LunoStreamingService extends JsonNettyStreamingService {
         return null;
     }
 
-    /*@Override
-    public boolean processArrayMassageSeparately() {
-        return false;
-    }*/
-
     @Override
     public void handleMessage(JsonNode message) {
 
         JsonNode sequence = message.get(SEQUENCE);
         if (sequence == null) {
-            LOG.error("Invalid message received, skipping. {}", message.toString());
+            LOG.debug("Invalid message received, skipping. {}", message.toString());
             return;
         }
+
+        if (lastSequence == null){
+            lastSequence = sequence.asInt();
+        }
+
+        if (sequence.asInt() - lastSequence > 1){
+            LOG.error("Message out of synch. Expecting sequence of {} got message {}", lastSequence, message.toString());
+            lastSequence = null;
+            this.disconnect().subscribe(() -> {
+                connectSendLoginMessage();
+            });
+
+            return;
+        }
+
+        lastSequence = sequence.asInt();
 
         JsonNode status = message.get(STATUS);
         if (status != null) {
@@ -144,26 +168,34 @@ public class LunoStreamingService extends JsonNettyStreamingService {
     }
 
    Observable<LunoWebSocketCreateUpdate> getCreateUpdates() {
-        return subjectCreate.share();
+        return this.subjectCreate.share();
     }
 
     Observable<LunoWebSocketTradeUpdate> getTradeUpdates() {
-        return subjectTrade.share();
+        return this.subjectTrade.share();
     }
 
     Observable<LunoWebSocketDeleteUpdate> getDeleteUpdates() {
-        return subjectDelete.share();
+        return this.subjectDelete.share();
     }
 
     Observable<LunoWebSocketStatusUpdate> getStatusUpdates() {
-        return subjectStatus.share();
+        return this.subjectStatus.share();
     }
 
     public Observable<LunoWebSocketOrderBook> getOrderBook() {
-        return subjectOrderBook.share();
+        return this.subjectOrderBook.share();
     }
 
     private <T> T deserialize(JsonNode message, Class<T> valueType) throws JsonProcessingException {
         return objectMapper.treeToValue(message, valueType);
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public void setApiSecret(String apiSecret) {
+        this.apiSecret = apiSecret;
     }
 }

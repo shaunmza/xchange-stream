@@ -36,13 +36,11 @@ public class LunoManualExample {
 
         StreamingExchange exchange = getExchange();
         ProductSubscription subscription = ProductSubscription.create()
-                .addTicker(CurrencyPair.BTC_ZAR)
                 .addTicker(CurrencyPair.ETH_BTC)
+                .addTicker(CurrencyPair.BTC_ZAR)
                 .build();
 
         exchange.connect(subscription).blockingAwait();
-
-        exchange.connectionSuccess();
 
         Observable<OrderBook> orderBookObserver = exchange.getStreamingMarketDataService().getOrderBook(CurrencyPair.BTC_ZAR);
         Disposable orderBookSubscriber = orderBookObserver.subscribe(orderBook -> {
@@ -53,7 +51,16 @@ public class LunoManualExample {
             LOG.error("ERROR in getting order book: ", throwable);
         });
 
-       Disposable orderChangesSubscriber = exchange.getStreamingMarketDataService().getTrades(CurrencyPair.BTC_ZAR)
+        Observable<OrderBook> orderBookObserverETH = exchange.getStreamingMarketDataService().getOrderBook(CurrencyPair.ETH_BTC);
+        Disposable orderBookSubscriberETH = orderBookObserverETH.subscribe(orderBook -> {
+            LOG.info("ETH First ask: {}", orderBook.getAsks().get(0));
+            LOG.info("ETH First bid: {}", orderBook.getBids().get(0));
+            LOG.info("ETH Order count: {}", orderBook.getBids().size() + orderBook.getAsks().size());
+        }, throwable -> {
+            LOG.error("ETH ERROR in getting order book: ", throwable);
+        });
+
+       Disposable orderChangesSubscriber = exchange.getStreamingMarketDataService().getTrades(CurrencyPair.ETH_BTC)
                 .subscribe(order -> {
                     LOG.info("ORDER: {}", order);
                 }, throwable -> {
@@ -64,6 +71,7 @@ public class LunoManualExample {
 
         orderChangesSubscriber.dispose();
         orderBookSubscriber.dispose();
+        orderBookSubscriberETH.dispose();
 
         LOG.info("disconnecting...");
         exchange.disconnect().subscribe(() -> LOG.info("disconnected"));
