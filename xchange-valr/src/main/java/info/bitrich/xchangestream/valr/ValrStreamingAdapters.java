@@ -11,25 +11,16 @@ import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.dto.trade.LimitOrder;
 
 import org.knowm.xchange.dto.trade.UserTrade;
-import org.knowm.xchange.valr.ValrAdapters;
 import org.knowm.xchange.valr.ValrUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import static java.util.stream.StreamSupport.stream;
 import static org.knowm.xchange.dto.Order.OrderType.ASK;
 import static org.knowm.xchange.dto.Order.OrderType.BID;
 
 class ValrStreamingAdapters {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ValrStreamingAdapters.class);
-
-    private static final BigDecimal THOUSAND = new BigDecimal(1000);
 
     static UserTrade adaptUserTrade(ValrWebSocketNewTradeData userTrade) {
         CurrencyPair pair = toCurrencyPair(userTrade.getCurrencyPair());
@@ -53,15 +44,30 @@ class ValrStreamingAdapters {
                 .build();
     }
 
-    static Trade adaptTrade(ValrWebSocketNewTradeData trade) {
-        CurrencyPair pair = toCurrencyPair(trade.getCurrencyPair());
+    static Trade adaptTrade(ValrWebSocketNewTrade trade) {
+        CurrencyPair pair = toCurrencyPair(trade.getCurrencyPairSymbol());
         return new Trade.Builder()
-                .type(trade.getTakerSide() == "buy" ? BID : ASK)
+                .type(trade.getData().getTakerSide() == "buy" ? BID : ASK)
                 .currencyPair(pair)
                 .id(null)
-                .originalAmount(new BigDecimal(trade.getQuantity()))
-                .price(new BigDecimal(trade.getPrice()))
-                .timestamp(ValrUtils.toDate(trade.getTradedAt()))
+                .originalAmount(new BigDecimal(trade.getData().getQuantity()))
+                .price(new BigDecimal(trade.getData().getPrice()))
+                .timestamp(ValrUtils.toDate(trade.getData().getTradedAt()))
+                .build();
+    }
+
+    static Ticker adaptTicker(ValrWebSocketMarketSummaryUpdate update) {
+        CurrencyPair pair = toCurrencyPair(update.getCurrencyPairSymbol());
+        return new Ticker.Builder()
+                .currencyPair(pair)
+                .open(new BigDecimal(update.getData().getPreviousClosePrice()))
+                .last(new BigDecimal(update.getData().getLastTradedPrice()))
+                .bid(new BigDecimal(update.getData().getBidPrice()))
+                .ask(new BigDecimal(update.getData().getAskPrice()))
+                .high(new BigDecimal(update.getData().getHighPrice()))
+                .low(new BigDecimal(update.getData().getLowPrice()))
+                .volume(new BigDecimal(update.getData().getBaseVolume()))
+                .timestamp(ValrUtils.toDate(update.getData().getCreated()))
                 .build();
     }
 

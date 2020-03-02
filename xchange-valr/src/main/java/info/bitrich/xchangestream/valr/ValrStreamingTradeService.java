@@ -1,14 +1,10 @@
 package info.bitrich.xchangestream.valr;
 
 import info.bitrich.xchangestream.core.StreamingTradeService;
-import info.bitrich.xchangestream.valr.dto.ValrWebSocketAggregatedOrderBookData;
 import io.reactivex.Observable;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.trade.UserTrade;
-import org.knowm.xchange.exceptions.ExchangeSecurityException;
-
-import java.util.function.Function;
 
 public class ValrStreamingTradeService implements StreamingTradeService {
 

@@ -28,11 +28,10 @@ public class ValrWebSocketSubscriptionMessage {
 
     /**
      *
-     * @param channel
      * @param event
      * @param pairs
      */
-    public ValrWebSocketSubscriptionMessage(String channel, String type, String event, List<String>  pairs) {
+    public ValrWebSocketSubscriptionMessage(String type, String event, List<String>  pairs) {
         ValrWebSocketSubscription subscription = new ValrWebSocketSubscription(event, pairs);
         List<ValrWebSocketSubscription> subscriptions = new ArrayList<>();
         subscriptions.add(subscription);

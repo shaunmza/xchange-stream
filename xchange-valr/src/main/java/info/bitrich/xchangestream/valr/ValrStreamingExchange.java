@@ -2,11 +2,13 @@ package info.bitrich.xchangestream.valr;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
+import info.bitrich.xchangestream.valr.dto.ValrWebSocketAggregatedOrderBookUpdate;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import org.apache.commons.lang3.StringUtils;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.bitfinex.BitfinexExchange;
+import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.valr.ValrExchange;
 
 import java.util.ArrayList;
@@ -35,7 +37,8 @@ public class ValrStreamingExchange extends ValrExchange implements StreamingExch
 
     private ValrStreamingService createStreamingService(String path) {
         ValrStreamingService streamingService = new ValrStreamingService(API_URI + path, getNonceFactory());
-        applyStreamingSpecification(getExchangeSpecification(), streamingService);
+        //applyStreamingSpecification(getExchangeSpecification(), streamingService);
+        streamingService.setApiPath(path);
         if (StringUtils.isNotEmpty(exchangeSpecification.getApiKey())) {
             streamingService.setApiKey(exchangeSpecification.getApiKey());
             streamingService.setApiSecret(exchangeSpecification.getSecretKey());
@@ -45,12 +48,16 @@ public class ValrStreamingExchange extends ValrExchange implements StreamingExch
 
     @Override
     public Completable connect(ProductSubscription... args) {
+        if (args == null || args.length == 0) {
+            throw new IllegalArgumentException("Subscriptions must be made at connection time");
+        }
 
         List<Completable> completables = new ArrayList<>();
         completables.add(streamingServiceForAccount.connect());
         completables.add(streamingServiceForTrade.connect());
 
-        this.streamingMarketDataService = new ValrStreamingMarketDataService(streamingServiceForTrade);
+        ProductSubscription subscriptions = args[0];
+        this.streamingMarketDataService = new ValrStreamingMarketDataService(streamingServiceForTrade, subscriptions);
         this.streamingTradeService = new ValrStreamingTradeService(streamingServiceForTrade);
         this.streamingAccountService = new ValrStreamingAccountService(streamingServiceForAccount);
 
@@ -64,7 +71,7 @@ public class ValrStreamingExchange extends ValrExchange implements StreamingExch
         completables.add(streamingServiceForAccount.disconnect());
         completables.add(streamingServiceForTrade.disconnect());
 
-        return Completable.concat(completables);
+        return Completable.merge(completables);
     }
 
     @Override
@@ -74,7 +81,8 @@ public class ValrStreamingExchange extends ValrExchange implements StreamingExch
 
     @Override
     public Observable<Object> connectionSuccess() {
-        return Observable.concat(
+
+        return Observable.merge(
                 streamingServiceForAccount.subscribeConnectionSuccess(),
                 streamingServiceForTrade.subscribeConnectionSuccess());
     }
